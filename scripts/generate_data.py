@@ -54,6 +54,11 @@ def main():
     parser.add_argument("--min-radius", type=float, default=0.15, help="Min radius fraction")
     parser.add_argument("--max-radius", type=float, default=0.40, help="Max radius fraction")
     parser.add_argument("--fill-mode", type=str, default="binary", choices=["binary", "gradient", "texture"])
+    parser.add_argument("--min-dots", type=int, default=15, help="Min dots along outline")
+    parser.add_argument("--max-dots", type=int, default=80, help="Max dots along outline")
+    parser.add_argument("--min-dot-radius", type=int, default=2, help="Min dot size (px)")
+    parser.add_argument("--max-dot-radius", type=int, default=6, help="Max dot size (px)")
+    parser.add_argument("--jitter-frac", type=float, default=0.03, help="Dot position jitter fraction")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     args = parser.parse_args()
 
@@ -65,6 +70,11 @@ def main():
         max_control_points=args.max_cp,
         min_radius_frac=args.min_radius,
         max_radius_frac=args.max_radius,
+        min_dots=args.min_dots,
+        max_dots=args.max_dots,
+        min_dot_radius=args.min_dot_radius,
+        max_dot_radius=args.max_dot_radius,
+        jitter_frac=args.jitter_frac,
         fill_mode=args.fill_mode,
         seed=args.seed,
     )

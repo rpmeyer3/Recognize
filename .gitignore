@@ -4,3 +4,10 @@
 /data/train/masks
 /data/val/images
 /data/val/masks
+/checkpoints
+/src/data/__pycache__
+/scripts
+/src/data/__pycache__
+/src/data
+training.log
+*.log

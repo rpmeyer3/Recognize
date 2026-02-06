@@ -16,7 +16,7 @@ model:
 # --- Data ---
 data:
   image_size: 512
-  num_train: 10000
+  num_train: 5000
   num_val: 2000
   num_test: 500
   output_dir: "data/"
@@ -30,40 +30,50 @@ data:
     min_radius_frac: 0.15         # Min shape radius as fraction of image size
     max_radius_frac: 0.40
     fill_mode: "binary"           # "binary" | "gradient" | "texture"
+    # Dot pattern parameters
+    min_dots: 15                  # Min dots along outline
+    max_dots: 80                  # Max dots along outline
+    min_dot_radius: 2             # Min dot size in pixels
+    max_dot_radius: 6             # Max dot size in pixels
+    dot_intensity_range: [0.6, 1.0]  # Dot brightness
+    bg_intensity_range: [0.0, 0.4]   # Background brightness
+    jitter_frac: 0.03             # Positional jitter
 
-  # Noise
+  # Noise (light augmentation on top of dot patterns)
   noise:
-    types: ["gaussian", "poisson", "salt_pepper", "speckle", "mixed"]
-    # Per-type parameter ranges (used at max curriculum difficulty)
-    gaussian_sigma: [0.01, 1.5]
-    poisson_lambda: [1.0, 300.0]
-    salt_pepper_prob: [0.01, 0.5]
-    speckle_sigma: [0.05, 2.0]
+    types: ["gaussian"]
+    gaussian_sigma: [0.01, 0.3]
+    poisson_lambda: [50.0, 300.0]
+    salt_pepper_prob: [0.01, 0.1]
+    speckle_sigma: [0.01, 0.3]
 
 # --- Curriculum Learning ---
+# Difficulty is now controlled by dot density:
+#   Easy = many dots (shape is obvious)
+#   Hard = few dots (shape is ambiguous)
 curriculum:
   enabled: true
   phases:
     - name: "easy"
       start_epoch: 1
-      end_epoch: 15
-      noise_scale: 0.1             # Fraction of max noise range
+      end_epoch: 5
+      noise_scale: 0.05
       mixed_prob: 0.0
     - name: "medium"
-      start_epoch: 16
-      end_epoch: 35
-      noise_scale: 0.35
-      mixed_prob: 0.2
+      start_epoch: 6
+      end_epoch: 20
+      noise_scale: 0.15
+      mixed_prob: 0.1
     - name: "hard"
-      start_epoch: 36
-      end_epoch: 60
-      noise_scale: 0.7
-      mixed_prob: 0.4
+      start_epoch: 21
+      end_epoch: 45
+      noise_scale: 0.25
+      mixed_prob: 0.2
     - name: "extreme"
-      start_epoch: 61
-      end_epoch: 100
-      noise_scale: 1.0
-      mixed_prob: 0.6
+      start_epoch: 46
+      end_epoch: 80
+      noise_scale: 0.3
+      mixed_prob: 0.3
 
 # --- Loss ---
 loss:
@@ -79,8 +89,8 @@ loss:
 
 # --- Training ---
 training:
-  epochs: 100
-  batch_size: 4
+  epochs: 80
+  batch_size: 8
   lr: 1.0e-4
   weight_decay: 1.0e-5
   optimizer: "adamw"              # "adam" | "adamw"

@@ -70,6 +70,9 @@ class PatternDataset(Dataset):
             self.image_dir = split_dir / "images"
             self.mask_dir = split_dir / "masks"
             self.filenames = sorted(os.listdir(self.image_dir))
+            # Respect num_samples cap — use a subset of pregenerated data
+            if num_samples < len(self.filenames):
+                self.filenames = self.filenames[:num_samples]
         else:
             # On-the-fly mode
             self.mode = "on_the_fly"
@@ -81,6 +84,13 @@ class PatternDataset(Dataset):
                 max_control_points=s_cfg.get("max_control_points", 15),
                 min_radius_frac=s_cfg.get("min_radius_frac", 0.15),
                 max_radius_frac=s_cfg.get("max_radius_frac", 0.40),
+                min_dots=s_cfg.get("min_dots", 15),
+                max_dots=s_cfg.get("max_dots", 80),
+                min_dot_radius=s_cfg.get("min_dot_radius", 2),
+                max_dot_radius=s_cfg.get("max_dot_radius", 6),
+                dot_intensity_range=tuple(s_cfg.get("dot_intensity_range", [0.6, 1.0])),
+                bg_intensity_range=tuple(s_cfg.get("bg_intensity_range", [0.0, 0.4])),
+                jitter_frac=s_cfg.get("jitter_frac", 0.03),
                 fill_mode=s_cfg.get("fill_mode", "binary"),
                 seed=seed if split != "train" else None,  # Deterministic val/test
             )
@@ -106,20 +116,24 @@ class PatternDataset(Dataset):
             image, mask = self.synthesizer.generate()
 
         # Convert to tensors: (1, H, W)
-        clean = torch.from_numpy(image).unsqueeze(0)     # (1, H, W)
-        mask_t = torch.from_numpy(mask).unsqueeze(0)      # (1, H, W)
+        input_t = torch.from_numpy(image).unsqueeze(0)   # (1, H, W) — dot pattern
+        mask_t = torch.from_numpy(mask).unsqueeze(0)      # (1, H, W) — filled mask
 
-        # Apply noise
-        noisy = self.noise_injector(clean, mixed_prob=self.mixed_prob)
+        # Optionally add light noise on top of dot pattern (curriculum-controlled)
+        if self.noise_injector is not None and self.noise_injector.scale > 0:
+            # Light noise augmentation — keeps dots visible but adds realism
+            noisy = self.noise_injector(input_t, mixed_prob=self.mixed_prob)
+        else:
+            noisy = input_t
 
         # Optional transform (augmentations)
         if self.transform is not None:
             noisy, mask_t = self.transform(noisy, mask_t)
 
         return {
-            "noisy": noisy,       # Input to the model
-            "clean": clean,       # Clean image (for visualization)
-            "mask": mask_t,       # Ground truth mask
+            "noisy": noisy,       # Input to the model (dot pattern, possibly with noise)
+            "clean": input_t,     # Clean dot pattern (for visualization)
+            "mask": mask_t,       # Ground truth filled mask
         }
 
 
