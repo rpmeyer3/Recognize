@@ -1,19 +1,13 @@
-# =============================================================================
-# Pattern Delineation — Default Configuration
-# =============================================================================
-
-# --- Model ---
 model:
-  name: "attention_unet"          # "attention_unet" | "unet"
-  in_channels: 1                  # Grayscale input
-  out_channels: 1                 # Binary mask output
-  base_filters: 64                # First encoder stage width
-  depth: 5                        # Number of encoder/decoder stages
-  use_cbam: true                  # Bolt CBAM onto encoder stages
-  use_blur_pool: true             # Anti-aliased downsampling
+  name: "attention_unet"
+  in_channels: 1
+  out_channels: 1
+  base_filters: 64
+  depth: 5
+  use_cbam: true
+  use_blur_pool: true
   dropout: 0.1
 
-# --- Data ---
 data:
   image_size: 512
   num_train: 5000
@@ -22,24 +16,19 @@ data:
   output_dir: "data/"
   num_workers: 4
   pin_memory: true
-
-  # Shape synthesis
   shape:
-    min_control_points: 5         # Bézier blob complexity
+    min_control_points: 5
     max_control_points: 15
-    min_radius_frac: 0.15         # Min shape radius as fraction of image size
+    min_radius_frac: 0.15
     max_radius_frac: 0.40
-    fill_mode: "binary"           # "binary" | "gradient" | "texture"
-    # Dot pattern parameters
-    min_dots: 15                  # Min dots along outline
-    max_dots: 80                  # Max dots along outline
-    min_dot_radius: 2             # Min dot size in pixels
-    max_dot_radius: 6             # Max dot size in pixels
-    dot_intensity_range: [0.6, 1.0]  # Dot brightness
-    bg_intensity_range: [0.0, 0.4]   # Background brightness
-    jitter_frac: 0.03             # Positional jitter
-
-  # Noise (light augmentation on top of dot patterns)
+    fill_mode: "binary"
+    min_dots: 15
+    max_dots: 80
+    min_dot_radius: 2
+    max_dot_radius: 6
+    dot_intensity_range: [0.6, 1.0]
+    bg_intensity_range: [0.0, 0.4]
+    jitter_frac: 0.03
   noise:
     types: ["gaussian"]
     gaussian_sigma: [0.01, 0.3]
@@ -47,10 +36,6 @@ data:
     salt_pepper_prob: [0.01, 0.1]
     speckle_sigma: [0.01, 0.3]
 
-# --- Curriculum Learning ---
-# Difficulty is now controlled by dot density:
-#   Easy = many dots (shape is obvious)
-#   Hard = few dots (shape is ambiguous)
 curriculum:
   enabled: true
   phases:
@@ -75,50 +60,42 @@ curriculum:
       noise_scale: 0.3
       mixed_prob: 0.3
 
-# --- Loss ---
 loss:
   dice_weight: 1.0
-  bce_weight: 1.0                 # Decays to bce_weight_min over training
+  bce_weight: 1.0
   bce_weight_min: 0.5
-  boundary_weight: 0.0            # Ramps to boundary_weight_max over training
+  boundary_weight: 0.0
   boundary_weight_max: 0.5
-  tversky_alpha: 0.7              # FN penalty weight
-  tversky_beta: 0.3               # FP penalty weight
+  tversky_alpha: 0.7
+  tversky_beta: 0.3
   boundary_ramp_start_epoch: 20
   boundary_ramp_end_epoch: 60
 
-# --- Training ---
 training:
   epochs: 80
   batch_size: 8
   lr: 1.0e-4
   weight_decay: 1.0e-5
-  optimizer: "adamw"              # "adam" | "adamw"
-  scheduler: "cosine"             # "cosine" | "plateau" | "step"
+  optimizer: "adamw"
+  scheduler: "cosine"
   warmup_epochs: 3
   grad_clip_norm: 1.0
   mixed_precision: true
   seed: 42
-
-  # Checkpointing
   checkpoint_dir: "checkpoints/"
   save_every: 5
   save_best_metric: "dice"
-
-  # Early stopping
   early_stopping:
     enabled: true
     patience: 15
     min_delta: 0.001
 
-# --- Evaluation ---
 evaluation:
   metrics: ["dice", "iou", "hausdorff", "boundary_f1"]
-  threshold: 0.5                  # Binarization threshold for predictions
+  threshold: 0.5
 
-# --- Preprocessing ---
 preprocessing:
-  enabled: false                  # Set true for optional spatial filtering
+  enabled: false
   bilateral:
     d: 9
     sigma_color: 75
@@ -128,7 +105,6 @@ preprocessing:
     template_window: 7
     search_window: 21
 
-# --- Visualization ---
 visualization:
-  log_every: 50                   # Log sample images every N batches
-  num_samples: 4                  # Number of samples to visualize
+  log_every: 50
+  num_samples: 4
