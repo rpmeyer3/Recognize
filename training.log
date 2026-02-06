@@ -1,0 +1,61 @@
+2026-02-05 23:29:06 [INFO] Using device: cuda
+2026-02-05 23:29:06 [INFO] Model: attention_unet (31,562,643 params)
+2026-02-05 23:29:06 [INFO] Train: 10000 samples, Val: 2000 samples
+2026-02-05 23:29:07 [INFO] Training for 100 epochs on cuda
+2026-02-05 23:29:07 [INFO] Model parameters: 31,562,643
+2026-02-05 23:29:07 [INFO] Curriculum Learning Schedule:
+--------------------------------------------------
+  Phase 'easy': epochs 1-15, noise_scale=0.10, mixed_prob=0.00
+  Phase 'medium': epochs 16-35, noise_scale=0.35, mixed_prob=0.20
+  Phase 'hard': epochs 36-60, noise_scale=0.70, mixed_prob=0.40
+  Phase 'extreme': epochs 61-100, noise_scale=1.00, mixed_prob=0.60
+2026-02-05 23:29:15 [INFO] Epoch 1 [0/2500] Loss: 1.3772 | Phase: easy | Scale: 0.10
+2026-02-05 23:29:25 [INFO] Epoch 1 [50/2500] Loss: 0.9399 | Phase: easy | Scale: 0.10
+2026-02-05 23:29:36 [INFO] Epoch 1 [100/2500] Loss: 0.4948 | Phase: easy | Scale: 0.10
+2026-02-05 23:29:46 [INFO] Epoch 1 [150/2500] Loss: 0.3947 | Phase: easy | Scale: 0.10
+2026-02-05 23:29:57 [INFO] Epoch 1 [200/2500] Loss: 0.5030 | Phase: easy | Scale: 0.10
+2026-02-05 23:30:08 [INFO] Epoch 1 [250/2500] Loss: 0.5463 | Phase: easy | Scale: 0.10
+2026-02-05 23:30:18 [INFO] Epoch 1 [300/2500] Loss: 0.5851 | Phase: easy | Scale: 0.10
+2026-02-05 23:30:29 [INFO] Epoch 1 [350/2500] Loss: 0.4268 | Phase: easy | Scale: 0.10
+2026-02-05 23:30:39 [INFO] Epoch 1 [400/2500] Loss: 0.4160 | Phase: easy | Scale: 0.10
+2026-02-05 23:30:50 [INFO] Epoch 1 [450/2500] Loss: 0.2387 | Phase: easy | Scale: 0.10
+2026-02-05 23:31:00 [INFO] Epoch 1 [500/2500] Loss: 0.3753 | Phase: easy | Scale: 0.10
+2026-02-05 23:31:11 [INFO] Epoch 1 [550/2500] Loss: 0.7340 | Phase: easy | Scale: 0.10
+2026-02-05 23:31:21 [INFO] Epoch 1 [600/2500] Loss: 0.4640 | Phase: easy | Scale: 0.10
+2026-02-05 23:31:31 [INFO] Epoch 1 [650/2500] Loss: 0.4236 | Phase: easy | Scale: 0.10
+2026-02-05 23:31:42 [INFO] Epoch 1 [700/2500] Loss: 0.2875 | Phase: easy | Scale: 0.10
+2026-02-05 23:31:52 [INFO] Epoch 1 [750/2500] Loss: 0.5436 | Phase: easy | Scale: 0.10
+2026-02-05 23:32:03 [INFO] Epoch 1 [800/2500] Loss: 0.2854 | Phase: easy | Scale: 0.10
+2026-02-05 23:32:14 [INFO] Epoch 1 [850/2500] Loss: 0.5956 | Phase: easy | Scale: 0.10
+2026-02-05 23:32:24 [INFO] Epoch 1 [900/2500] Loss: 0.1980 | Phase: easy | Scale: 0.10
+2026-02-05 23:32:35 [INFO] Epoch 1 [950/2500] Loss: 0.2697 | Phase: easy | Scale: 0.10
+2026-02-05 23:32:46 [INFO] Epoch 1 [1000/2500] Loss: 0.2491 | Phase: easy | Scale: 0.10
+2026-02-05 23:32:56 [INFO] Epoch 1 [1050/2500] Loss: 0.2910 | Phase: easy | Scale: 0.10
+2026-02-05 23:33:07 [INFO] Epoch 1 [1100/2500] Loss: 0.3585 | Phase: easy | Scale: 0.10
+2026-02-05 23:33:17 [INFO] Epoch 1 [1150/2500] Loss: 0.4152 | Phase: easy | Scale: 0.10
+2026-02-05 23:33:27 [INFO] Epoch 1 [1200/2500] Loss: 0.3062 | Phase: easy | Scale: 0.10
+2026-02-05 23:33:38 [INFO] Epoch 1 [1250/2500] Loss: 0.6018 | Phase: easy | Scale: 0.10
+2026-02-05 23:33:48 [INFO] Epoch 1 [1300/2500] Loss: 0.2841 | Phase: easy | Scale: 0.10
+2026-02-05 23:33:58 [INFO] Epoch 1 [1350/2500] Loss: 0.4348 | Phase: easy | Scale: 0.10
+2026-02-05 23:34:09 [INFO] Epoch 1 [1400/2500] Loss: 0.1482 | Phase: easy | Scale: 0.10
+2026-02-05 23:34:19 [INFO] Epoch 1 [1450/2500] Loss: 0.2337 | Phase: easy | Scale: 0.10
+2026-02-05 23:34:29 [INFO] Epoch 1 [1500/2500] Loss: 0.4040 | Phase: easy | Scale: 0.10
+2026-02-05 23:34:40 [INFO] Epoch 1 [1550/2500] Loss: 0.3704 | Phase: easy | Scale: 0.10
+2026-02-05 23:34:51 [INFO] Epoch 1 [1600/2500] Loss: 0.5113 | Phase: easy | Scale: 0.10
+2026-02-05 23:35:01 [INFO] Epoch 1 [1650/2500] Loss: 0.2442 | Phase: easy | Scale: 0.10
+2026-02-05 23:35:12 [INFO] Epoch 1 [1700/2500] Loss: 0.3238 | Phase: easy | Scale: 0.10
+2026-02-05 23:35:22 [INFO] Epoch 1 [1750/2500] Loss: 0.1371 | Phase: easy | Scale: 0.10
+2026-02-05 23:35:33 [INFO] Epoch 1 [1800/2500] Loss: 0.2136 | Phase: easy | Scale: 0.10
+2026-02-05 23:35:43 [INFO] Epoch 1 [1850/2500] Loss: 0.0786 | Phase: easy | Scale: 0.10
+2026-02-05 23:35:54 [INFO] Epoch 1 [1900/2500] Loss: 0.0702 | Phase: easy | Scale: 0.10
+2026-02-05 23:36:04 [INFO] Epoch 1 [1950/2500] Loss: 0.1879 | Phase: easy | Scale: 0.10
+2026-02-05 23:36:15 [INFO] Epoch 1 [2000/2500] Loss: 0.0779 | Phase: easy | Scale: 0.10
+2026-02-05 23:36:25 [INFO] Epoch 1 [2050/2500] Loss: 0.0971 | Phase: easy | Scale: 0.10
+2026-02-05 23:36:36 [INFO] Epoch 1 [2100/2500] Loss: 0.1872 | Phase: easy | Scale: 0.10
+2026-02-05 23:36:46 [INFO] Epoch 1 [2150/2500] Loss: 0.0867 | Phase: easy | Scale: 0.10
+2026-02-05 23:36:57 [INFO] Epoch 1 [2200/2500] Loss: 0.0815 | Phase: easy | Scale: 0.10
+2026-02-05 23:37:07 [INFO] Epoch 1 [2250/2500] Loss: 0.0549 | Phase: easy | Scale: 0.10
+2026-02-05 23:37:17 [INFO] Epoch 1 [2300/2500] Loss: 0.2460 | Phase: easy | Scale: 0.10
+2026-02-05 23:37:28 [INFO] Epoch 1 [2350/2500] Loss: 0.1720 | Phase: easy | Scale: 0.10
+2026-02-05 23:37:38 [INFO] Epoch 1 [2400/2500] Loss: 0.2508 | Phase: easy | Scale: 0.10
+2026-02-05 23:37:49 [INFO] Epoch 1 [2450/2500] Loss: 0.1444 | Phase: easy | Scale: 0.10

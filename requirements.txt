@@ -1,0 +1,24 @@
+# =============================================================================
+# Pattern Delineation — Dependencies
+# =============================================================================
+
+# Core
+torch>=2.0.0
+torchvision>=0.15.0
+numpy>=1.24.0
+
+# Image processing
+opencv-python>=4.8.0
+scipy>=1.11.0
+scikit-image>=0.21.0
+
+# Data & config
+pyyaml>=6.0
+tqdm>=4.65.0
+
+# Visualization
+matplotlib>=3.7.0
+
+# Optional: GPU-accelerated training monitoring
+# tensorboard>=2.13.0
+# wandb>=0.15.0

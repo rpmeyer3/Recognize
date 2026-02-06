@@ -1,0 +1,6 @@
+/data/test/images
+/data/test/masks
+/data/train/images
+/data/train/masks
+/data/val/images
+/data/val/masks
