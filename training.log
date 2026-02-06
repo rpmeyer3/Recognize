@@ -1199,3 +1199,4 @@
   Phase 'hard': epochs 21-45, noise_scale=0.25, mixed_prob=0.20
   Phase 'extreme': epochs 46-80, noise_scale=0.30, mixed_prob=0.30
 2026-02-06 11:40:29 [INFO] Epoch 1 [0/625] Loss: 1.4168 | Phase: easy | Scale: 0.05
+2026-02-06 12:02:06 [INFO] Epoch 1 [50/625] Loss: 1.1766 | Phase: easy | Scale: 0.05

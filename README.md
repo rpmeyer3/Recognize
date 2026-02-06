@@ -97,7 +97,9 @@ probability of compound noise over time.
 Standard BCE collapses when noise overwhelms the signal because the noisy input pushes 
 predictions toward the prior class frequency. We use a **compound loss**:
 
-$$\mathcal{L} = \alpha \cdot \mathcal{L}_{\text{Dice}} + \beta \cdot \mathcal{L}_{\text{BCE}} + \gamma \cdot \mathcal{L}_{\text{Boundary}}$$
+```math
+\mathcal{L} = \alpha \cdot \mathcal{L}_{\text{Dice}} + \beta \cdot \mathcal{L}_{\text{BCE}} + \gamma \cdot \mathcal{L}_{\text{Boundary}}
+```
 
 | Component | Purpose | Weight Schedule |
 |---|---|---|
@@ -126,40 +128,6 @@ Do NOT use a fully separate denoising step — this discards signal along with n
    - **Residual connections** that allow the network to refine noisy features incrementally
 3. **No separate denoising autoencoder** — empirically, end-to-end approaches trained with 
    curriculum learning outperform two-stage pipelines on this task.
-
----
-
-## Project Structure
-
-pattern-delineation/
-├── configs/
-│   └── default.yaml              # All hyperparameters
-├── src/
-│   ├── models/
-│   │   ├── attention_unet.py     # Primary architecture
-│   │   ├── unet.py               # Vanilla U-Net baseline
-│   │   └── layers.py             # Attention gates, CBAM, BlurPool
-│   ├── data/
-│   │   ├── dataset.py            # PyTorch Dataset + DataLoader
-│   │   ├── noise.py              # All noise injection functions
-│   │   └── synthesis.py          # Shape generation pipeline
-│   ├── losses/
-│   │   └── losses.py             # Dice, Tversky, Compound loss
-│   ├── training/
-│   │   ├── trainer.py            # Training loop + validation
-│   │   └── curriculum.py         # Curriculum scheduler
-│   ├── preprocessing/
-│   │   └── filters.py            # Bilateral, NLM, BlurPool
-│   └── utils/
-│       ├── metrics.py            # IoU, Dice, Hausdorff, BDE
-│       └── visualization.py      # Plotting utilities
-├── scripts/
-│   ├── generate_data.py          # Offline data generation
-│   ├── train.py                  # Training entrypoint
-│   ├── evaluate.py               # Evaluation entrypoint
-│   └── inference.py              # Single-image inference
-├── requirements.txt
-└── README.md
 
 ---
 
