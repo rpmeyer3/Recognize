@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pattern Delineation</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Pattern Delineation</h1>
+    <p class="subtitle">Noise-robust shape segmentation powered by Attention U-Net</p>
+  </header>
+
+  <main>
+    <!-- ── Upload card ──────────────────────────────────────────────── -->
+    <section class="card" id="upload-section">
+      <h2>Upload an Image</h2>
+      <p>Upload a grayscale image and get a predicted binary mask.</p>
+      <div class="upload-area" id="drop-zone">
+        <input type="file" id="file-input" accept="image/*" hidden />
+        <button class="btn" onclick="document.getElementById('file-input').click()">
+          Choose File
+        </button>
+        <span id="file-name">or drag &amp; drop here</span>
+      </div>
+      <div class="slider-row">
+        <label for="threshold">Threshold: <span id="thresh-val">0.50</span></label>
+        <input type="range" id="threshold" min="0.05" max="0.95" step="0.05" value="0.50" />
+      </div>
+      <button class="btn primary" id="predict-btn" disabled>Predict</button>
+      <div class="results" id="upload-results" hidden>
+        <div class="img-box"><p>Input</p><img id="res-input" /></div>
+        <div class="img-box"><p>Mask</p><img id="res-mask" /></div>
+        <div class="img-box"><p>Probability</p><img id="res-prob" /></div>
+      </div>
+    </section>
+
+    <!-- ── Demo card ────────────────────────────────────────────────── -->
+    <section class="card" id="demo-section">
+      <h2>Live Demo</h2>
+      <p>Generate a random dot pattern and see the model predict its boundary.</p>
+      <div class="slider-row">
+        <label for="dots">Dots: <span id="dots-val">40</span></label>
+        <input type="range" id="dots" min="8" max="120" step="2" value="40" />
+      </div>
+      <div class="slider-row">
+        <label for="jitter">Jitter: <span id="jitter-val">0.030</span></label>
+        <input type="range" id="jitter" min="0" max="0.1" step="0.005" value="0.03" />
+      </div>
+      <button class="btn primary" id="demo-btn">Generate &amp; Predict</button>
+      <p class="score" id="dice-score"></p>
+      <div class="results" id="demo-results" hidden>
+        <div class="img-box"><p>Dot Pattern</p><img id="demo-input" /></div>
+        <div class="img-box"><p>Ground Truth</p><img id="demo-gt" /></div>
+        <div class="img-box"><p>Prediction</p><img id="demo-mask" /></div>
+        <div class="img-box"><p>Probability</p><img id="demo-prob" /></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>API powered by FastAPI on Render &middot; Frontend on Vercel</p>
+  </footer>
+
+  <div class="spinner" id="spinner" hidden>
+    <div class="loader"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

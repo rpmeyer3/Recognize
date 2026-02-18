@@ -19,6 +19,11 @@ tqdm>=4.65.0
 # Visualization
 matplotlib>=3.7.0
 
+# API server (deployment)
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+
 # Optional: GPU-accelerated training monitoring
 # tensorboard>=2.13.0
 # wandb>=0.15.0

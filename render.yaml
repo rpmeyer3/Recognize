@@ -1,0 +1,20 @@
+# Render Blueprint — deploy with "New > Blueprint" pointing at this repo
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: pattern-delineation-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter          # or "standard" for more RAM
+    envVars:
+      - key: CONFIG_PATH
+        value: /app/configs/default.yaml
+      - key: CHECKPOINT_PATH
+        value: /app/checkpoints/best.pth
+      - key: ALLOWED_ORIGINS
+        # Replace with your Vercel domain once deployed
+        value: "*"
+      - key: PORT
+        value: "10000"
+    healthCheckPath: /health
