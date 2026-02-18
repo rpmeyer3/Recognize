@@ -1,9 +1,9 @@
 # ── Stage 1: Build ───────────────────────────────────────────────────────────
 FROM python:3.11-slim AS base
 
-# System deps for opencv
+# System deps for opencv + curl for downloading checkpoint
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1 libglib2.0-0 && \
+    libgl1 libglib2.0-0 curl && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -12,10 +12,15 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project
+# Copy project (checkpoints excluded in .dockerignore)
 COPY . .
 
-# ── Environment defaults (override in Render dashboard) ─────────────────────
+# Download checkpoint from Hugging Face
+RUN mkdir -p /app/checkpoints && \
+    curl -L -o /app/checkpoints/best.pth \
+    "https://huggingface.co/ryandoesai/pattern-dillineation/resolve/main/best.pth"
+
+# ── Environment defaults ─────────────────────────────────────────────────────
 ENV CONFIG_PATH=/app/configs/default.yaml
 ENV CHECKPOINT_PATH=/app/checkpoints/best.pth
 ENV ALLOWED_ORIGINS=*

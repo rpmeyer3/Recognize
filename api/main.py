@@ -1,8 +1,3 @@
-"""
-FastAPI inference server for Pattern Delineation.
-Deploy on Render (or any Docker host).
-"""
-
 import io, os, sys
 from pathlib import Path
 
