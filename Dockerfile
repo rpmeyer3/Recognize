@@ -19,10 +19,11 @@ RUN grep -v -E '^torch' requirements.txt > requirements-deploy.txt && \
 # Copy project
 COPY . .
 
-# Download checkpoint from Hugging Face
+# Download checkpoint from Hugging Face (Xet storage requires ?download=true)
 RUN mkdir -p /app/checkpoints && \
     curl -L -o /app/checkpoints/best.pth \
-    "https://huggingface.co/ryandoesai/pattern-dillineation/resolve/main/best.pth"
+    "https://huggingface.co/ryandoesai/pattern-dillineation/resolve/main/best.pth?download=true" && \
+    echo "Downloaded checkpoint:" && ls -lh /app/checkpoints/best.pth
 
 # ── Environment defaults ─────────────────────────────────────────────────────
 ENV CONFIG_PATH=/app/configs/default.yaml
