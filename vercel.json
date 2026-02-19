@@ -1,11 +1,6 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "web/**", "use": "@vercel/static" }
-  ],
-  "routes": [
-    { "src": "/(.*)", "dest": "/web/$1" }
-  ],
+  "outputDirectory": "web",
   "headers": [
     {
       "source": "/(.*)",
