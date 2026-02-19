@@ -30,11 +30,11 @@ data:
     bg_intensity_range: [0.0, 0.4]
     jitter_frac: 0.03
   noise:
-    types: ["gaussian"]
-    gaussian_sigma: [0.01, 0.3]
-    poisson_lambda: [50.0, 300.0]
-    salt_pepper_prob: [0.01, 0.1]
-    speckle_sigma: [0.01, 0.3]
+    types: ["gaussian", "poisson", "salt_pepper", "speckle", "mixed"]
+    gaussian_sigma: [0.01, 1.5]
+    poisson_lambda: [1.0, 300.0]
+    salt_pepper_prob: [0.01, 0.5]
+    speckle_sigma: [0.05, 2.0]
 
 curriculum:
   enabled: true
@@ -42,23 +42,23 @@ curriculum:
     - name: "easy"
       start_epoch: 1
       end_epoch: 5
-      noise_scale: 0.05
+      noise_scale: 0.1
       mixed_prob: 0.0
     - name: "medium"
       start_epoch: 6
       end_epoch: 20
-      noise_scale: 0.15
-      mixed_prob: 0.1
+      noise_scale: 0.35
+      mixed_prob: 0.2
     - name: "hard"
       start_epoch: 21
       end_epoch: 45
-      noise_scale: 0.25
-      mixed_prob: 0.2
+      noise_scale: 0.7
+      mixed_prob: 0.4
     - name: "extreme"
       start_epoch: 46
       end_epoch: 80
-      noise_scale: 0.3
-      mixed_prob: 0.3
+      noise_scale: 1.0
+      mixed_prob: 0.6
 
 loss:
   dice_weight: 1.0

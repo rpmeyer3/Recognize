@@ -143,6 +143,23 @@ class Trainer:
         results = self.metrics.compute()
         if sample is not None:
             self.visualizer.log_predictions(sample, epoch, save_dir=self.ckpt_dir / "vis")
+
+        # --- Clean-data validation (no noise) to verify inference-time quality ---
+        clean_metrics = SegmentationMetrics(threshold=self.metrics.threshold)
+        clean_metrics.reset()
+        for bi, batch in enumerate(self.val_loader):
+            x_clean = batch["clean"].to(self.device)
+            y = batch["mask"].to(self.device)
+            with autocast(enabled=self.use_amp):
+                logits = self.model(x_clean)
+            probs = torch.sigmoid(logits)
+            clean_metrics.update(probs, y)
+            if bi >= 10:          # limit to ~10 batches for speed
+                break
+        clean_results = clean_metrics.compute()
+        results["clean_dice"] = clean_results["dice"]
+        results["clean_iou"] = clean_results["iou"]
+
         return {"val_loss": avg, **results}
 
     def save_checkpoint(self, epoch, metrics, is_best=False):
@@ -194,7 +211,8 @@ class Trainer:
             logger.info(
                 f"Epoch {epoch}/{self.epochs} ({elapsed:.1f}s) | Phase: {phase} | LR: {lr:.2e} | "
                 f"Train Loss: {train_m['loss']:.4f} | Val Loss: {val_m['val_loss']:.4f} | "
-                f"Val Dice: {val_m.get('dice', 0):.4f} | Val IoU: {val_m.get('iou', 0):.4f}"
+                f"Val Dice: {val_m.get('dice', 0):.4f} | Val IoU: {val_m.get('iou', 0):.4f} | "
+                f"Clean Dice: {val_m.get('clean_dice', 0):.4f}"
             )
 
             cur = val_m.get(self.best_metric_name, 0)
