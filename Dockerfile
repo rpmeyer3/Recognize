@@ -28,6 +28,7 @@ RUN mkdir -p /app/checkpoints && \
 ENV CONFIG_PATH=/app/configs/default.yaml
 ENV CHECKPOINT_PATH=/app/checkpoints/best.pth
 ENV ALLOWED_ORIGINS=*
+ENV INFER_SIZE=256
 
 # Railway sets PORT dynamically — default to 8000 as fallback
 ENV PORT=8000

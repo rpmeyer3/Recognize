@@ -20,7 +20,12 @@ const demoBtn = $("#demo-btn");
 // ─── Helpers ────────────────────────────────────────────────────────────────
 function showSpinner() { spinner.hidden = false; }
 function hideSpinner() { spinner.hidden = true; }
-
+// Fetch with timeout (default 120 s)
+function fetchWithTimeout(url, opts = {}, timeoutMs = 120000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...opts, signal: controller.signal }).finally(() => clearTimeout(id));
+}
 function b64ToSrc(b64) {
   return `data:image/png;base64,${b64}`;
 }
@@ -70,11 +75,14 @@ predictBtn.addEventListener("click", async () => {
     const form = new FormData();
     form.append("file", selectedFile);
     const thresh = parseFloat(thresholdSlider.value);
-    const res = await fetch(`${API_URL}/predict/json?threshold=${thresh}`, {
+    const res = await fetchWithTimeout(`${API_URL}/predict/json?threshold=${thresh}`, {
       method: "POST",
       body: form,
     });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      const text = await res.text().catch(() => res.statusText);
+      throw new Error(text);
+    }
     const data = await res.json();
 
     // Show input preview
@@ -86,7 +94,10 @@ predictBtn.addEventListener("click", async () => {
     $("#res-prob").src = b64ToSrc(data.probability);
     $("#upload-results").hidden = false;
   } catch (err) {
-    alert("Prediction failed: " + err.message);
+    const msg = err.name === "AbortError"
+      ? "Request timed out — the server may be waking up. Try again in ~30 s."
+      : "Prediction failed: " + err.message;
+    alert(msg);
   } finally {
     hideSpinner();
   }
@@ -98,8 +109,11 @@ demoBtn.addEventListener("click", async () => {
   try {
     const dots = parseInt(dotsSlider.value);
     const jitter = parseFloat(jitterSlider.value);
-    const res = await fetch(`${API_URL}/demo?num_dots=${dots}&jitter=${jitter}`);
-    if (!res.ok) throw new Error(await res.text());
+    const res = await fetchWithTimeout(`${API_URL}/demo?num_dots=${dots}&jitter=${jitter}`);
+    if (!res.ok) {
+      const text = await res.text().catch(() => res.statusText);
+      throw new Error(text);
+    }
     const data = await res.json();
 
     $("#demo-input").src = b64ToSrc(data.input);
@@ -109,7 +123,10 @@ demoBtn.addEventListener("click", async () => {
     $("#dice-score").textContent = `Dice Score: ${data.dice}`;
     $("#demo-results").hidden = false;
   } catch (err) {
-    alert("Demo failed: " + err.message);
+    const msg = err.name === "AbortError"
+      ? "Request timed out — the server may be waking up. Try again in ~30 s."
+      : "Demo failed: " + err.message;
+    alert(msg);
   } finally {
     hideSpinner();
   }

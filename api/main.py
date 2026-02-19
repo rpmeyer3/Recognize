@@ -1,4 +1,4 @@
-import io, os, sys
+import gc, io, os, sys
 from pathlib import Path
 
 import cv2
@@ -8,10 +8,6 @@ import yaml
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
-try:
-    from torch.amp import autocast
-except ImportError:
-    from torch.cuda.amp import autocast
 
 # ── allow imports from project root ──────────────────────────────────────────
 ROOT = Path(__file__).resolve().parent.parent
@@ -24,13 +20,16 @@ from src.data.synthesis import ShapeSynthesizer
 # ── globals ──────────────────────────────────────────────────────────────────
 MODEL = None
 DEVICE = None
-IMG_SIZE = 512
+IMG_SIZE = 512          # training resolution (for synthesis ground-truth)
+INFER_SIZE = 256        # inference resolution (lower = less RAM)
 SYNTH = None
 CFG = None
 
 # ── config ───────────────────────────────────────────────────────────────────
 CONFIG_PATH = os.environ.get("CONFIG_PATH", str(ROOT / "configs" / "default.yaml"))
 CHECKPOINT_PATH = os.environ.get("CHECKPOINT_PATH", str(ROOT / "checkpoints" / "best.pth"))
+# Inference resolution (default 256 to fit in 512 MB; set to 512 if you have ≥1 GB RAM)
+INFER_SIZE = int(os.environ.get("INFER_SIZE", "256"))
 # Comma-separated allowed origins (set in Railway env vars)
 _origins_raw = os.environ.get("ALLOWED_ORIGINS", "*").strip()
 ALLOWED_ORIGINS = ["*"] if _origins_raw == "*" else [o.strip() for o in _origins_raw.split(",")]
@@ -92,14 +91,17 @@ def load_model():
 def _predict(gray: np.ndarray, threshold: float = 0.5):
     """Run inference on a grayscale numpy image, return (mask, prob) as uint8."""
     h, w = gray.shape[:2]
-    resized = cv2.resize(gray, (IMG_SIZE, IMG_SIZE), interpolation=cv2.INTER_AREA)
+    resized = cv2.resize(gray, (INFER_SIZE, INFER_SIZE), interpolation=cv2.INTER_AREA)
     t = torch.from_numpy(resized.astype(np.float32) / 255.0).unsqueeze(0).unsqueeze(0).to(DEVICE)
-    with torch.no_grad():
+    with torch.inference_mode():
         logits = MODEL(t)
         probs = torch.sigmoid(logits)
         mask = (probs > threshold).float()
     mask_np = cv2.resize(mask[0, 0].cpu().numpy(), (w, h), interpolation=cv2.INTER_NEAREST)
     prob_np = cv2.resize(probs[0, 0].cpu().numpy(), (w, h), interpolation=cv2.INTER_LINEAR)
+    # free tensors and reclaim memory
+    del t, logits, probs, mask
+    gc.collect()
     return (mask_np * 255).astype(np.uint8), (prob_np * 255).astype(np.uint8)
 
 
