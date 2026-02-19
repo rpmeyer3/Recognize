@@ -29,22 +29,29 @@ const jitterVal      = $("#jitter-val");
 const demoBtn        = $("#demo-btn");
 
 const heatmapToggle  = $("#heatmap-toggle");
+const downloadBtn    = $("#download-btn");
 
-const viewerPlaceholder = $("#viewer-placeholder");
 const viewerResults     = $("#viewer-results");
 const canvasInput       = $("#canvas-input");
 const canvasMask        = $("#canvas-mask");
 const canvasHeatmap     = $("#canvas-heatmap");
 const maskLabel         = $("#mask-label");
 
+const paneEmpties    = document.querySelectorAll(".pane-empty");
+
 const gtRow          = $("#gt-row");
 const canvasGt       = $("#canvas-gt");
 const diceBadge      = $("#dice-badge");
 const diceValue      = $("#dice-value");
 
+const historyList    = $("#history-list");
+const historyEmpty   = $("#history-empty");
+
 // ── State ───────────────────────────────────────────────────────────────────
 let heatmapVisible   = false;
 let probImageData    = null;   // raw probability PNG data for heatmap
+let runHistory       = [];     // { dice, dots, jitter, timestamp, thumbB64 }
+let hasResults       = false;  // tracks whether canvases have content
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 function toast(msg, type = "") {
@@ -158,8 +165,9 @@ async function checkHealth() {
 
 // ── Show results ────────────────────────────────────────────────────────────
 function showResults() {
-  viewerPlaceholder.hidden = true;
-  viewerResults.hidden     = false;
+  paneEmpties.forEach((el) => (el.hidden = true));
+  hasResults = true;
+  downloadBtn.disabled = false;
 }
 
 // ── Demo ────────────────────────────────────────────────────────────────────
@@ -204,11 +212,113 @@ async function demo() {
     }
 
     toast(`Demo complete — Dice: ${j.dice.toFixed(4)}`, "success");
+
+    // ── Add to run history ──
+    addHistoryItem(j.dice, dots, jitter, j.input);
   } catch (e) {
     toast(e.message, "error");
   } finally {
     showProcessing(false);
   }
+}
+
+// ── Run History ─────────────────────────────────────────────────────────────
+function addHistoryItem(dice, dots, jitter, thumbB64) {
+  const entry = {
+    dice,
+    dots,
+    jitter,
+    timestamp: new Date(),
+    thumbB64,
+  };
+  runHistory.unshift(entry);
+  renderHistory();
+}
+
+function renderHistory() {
+  if (runHistory.length === 0) {
+    historyEmpty.hidden = false;
+    return;
+  }
+  historyEmpty.hidden = true;
+  historyList.innerHTML = "";
+
+  runHistory.forEach((entry, i) => {
+    const el = document.createElement("div");
+    el.className = "history-item";
+
+    const num = document.createElement("span");
+    num.className = "history-item__num";
+    num.textContent = `#${runHistory.length - i}`;
+
+    const thumb = document.createElement("span");
+    thumb.className = "history-item__thumb";
+    const tc = document.createElement("canvas");
+    thumb.appendChild(tc);
+    // Draw thumbnail
+    const img = new Image();
+    img.onload = () => {
+      tc.width = img.width;
+      tc.height = img.height;
+      tc.getContext("2d").drawImage(img, 0, 0);
+    };
+    img.src = "data:image/png;base64," + entry.thumbB64;
+
+    const diceSpan = document.createElement("span");
+    diceSpan.className = "history-item__dice";
+    diceSpan.textContent = entry.dice.toFixed(4);
+    if (entry.dice >= 0.85) diceSpan.style.color = "var(--success)";
+    else if (entry.dice >= 0.6) diceSpan.style.color = "var(--warning)";
+    else diceSpan.style.color = "var(--danger)";
+
+    const params = document.createElement("span");
+    params.className = "history-item__params";
+    params.textContent = `${entry.dots} dots · jitter ${parseFloat(entry.jitter).toFixed(3)}`;
+
+    const time = document.createElement("span");
+    time.className = "history-item__time";
+    time.textContent = entry.timestamp.toLocaleTimeString();
+
+    el.append(num, thumb, diceSpan, params, time);
+    historyList.appendChild(el);
+  });
+}
+
+// ── Download composite ──────────────────────────────────────────────────────
+function downloadResults() {
+  if (!hasResults) return;
+
+  const w = canvasInput.width;
+  const h = canvasInput.height;
+  const gap = 8;
+  const cols = 3;
+  const totalW = w * cols + gap * (cols - 1);
+  const totalH = h + 28;
+
+  const offscreen = document.createElement("canvas");
+  offscreen.width = totalW;
+  offscreen.height = totalH;
+  const ctx = offscreen.getContext("2d");
+
+  ctx.fillStyle = "#06080d";
+  ctx.fillRect(0, 0, totalW, totalH);
+
+  // Labels
+  ctx.fillStyle = "#7a8ba5";
+  ctx.font = '11px "JetBrains Mono", monospace';
+  ctx.fillText("Input", 0, 12);
+  ctx.fillText("Prediction", w + gap, 12);
+  ctx.fillText("Ground Truth", (w + gap) * 2, 12);
+
+  const yOff = 20;
+  ctx.drawImage(canvasInput, 0, yOff, w, h);
+  ctx.drawImage(canvasMask,  w + gap, yOff, w, h);
+  ctx.drawImage(canvasGt,    (w + gap) * 2, yOff, w, h);
+
+  const link = document.createElement("a");
+  link.download = `pattern-delineation-${Date.now()}.png`;
+  link.href = offscreen.toDataURL("image/png");
+  link.click();
 }
 
 // ── Event wiring ────────────────────────────────────────────────────────────
@@ -236,6 +346,9 @@ heatmapToggle.addEventListener("click", () => {
     ? "Confidence Heatmap"
     : "AI Segmentation Mask";
 });
+
+// Download button
+downloadBtn.addEventListener("click", downloadResults);
 
 // ── Init ────────────────────────────────────────────────────────────────────
 window.addEventListener("DOMContentLoaded", () => {

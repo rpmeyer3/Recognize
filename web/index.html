@@ -138,26 +138,24 @@
             </svg>
             Heatmap
           </button>
+          <button class="toggle-btn" id="download-btn" title="Download results as PNG" disabled>
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16">
+              <path d="M10 3v10M6 9l4 4 4-4"/>
+              <path d="M3 14v2a1 1 0 001 1h12a1 1 0 001-1v-2"/>
+            </svg>
+            Download
+          </button>
         </div>
       </div>
 
-      <!-- Placeholder -->
-      <div class="viewer-placeholder" id="viewer-placeholder">
-        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2" width="64" height="64" opacity="0.4">
-          <rect x="4" y="8" width="56" height="48" rx="4"/>
-          <circle cx="20" cy="26" r="6"/>
-          <path d="M4 44l16-14 10 8 14-16 16 12"/>
-        </svg>
-        <p>Generate a synthetic dot pattern to see AI segmentation in action</p>
-      </div>
-
       <!-- Results -->
-      <div class="viewer-results" id="viewer-results" hidden>
+      <div class="viewer-results" id="viewer-results">
         <div class="viewer-grid">
           <div class="viewer-pane">
             <div class="pane-label">Original Input</div>
             <div class="pane-frame">
               <canvas id="canvas-input"></canvas>
+              <div class="pane-empty" id="pane-empty-input">Press Generate &amp; Predict</div>
             </div>
           </div>
           <div class="viewer-pane">
@@ -165,6 +163,7 @@
             <div class="pane-frame">
               <canvas id="canvas-mask"></canvas>
               <canvas id="canvas-heatmap" class="heatmap-overlay" hidden></canvas>
+              <div class="pane-empty" id="pane-empty-mask">Awaiting analysis</div>
             </div>
           </div>
         </div>
@@ -185,6 +184,45 @@
       </div>
     </section>
   </main>
+
+  <!-- ── Run History ─────────────────────────────────────────────────────────── -->
+  <section class="history-section">
+    <div class="panel glass history-panel">
+      <h2 class="panel__heading"><span class="neon-dot"></span> Run History</h2>
+      <div class="history-list" id="history-list">
+        <p class="history-empty" id="history-empty">No runs yet — generate a pattern to start</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Architecture Info ───────────────────────────────────────────────────── -->
+  <section class="arch-section">
+    <div class="panel glass arch-panel">
+      <h2 class="panel__heading"><span class="neon-dot"></span> Model Architecture</h2>
+      <div class="arch-grid">
+        <div class="arch-card">
+          <span class="arch-card__icon">&#x1F9E0;</span>
+          <span class="arch-card__title">Attention U-Net</span>
+          <span class="arch-card__desc">Encoder-decoder with attention gates for focused feature extraction</span>
+        </div>
+        <div class="arch-card">
+          <span class="arch-card__icon">&#x2699;</span>
+          <span class="arch-card__title">31.5M Params</span>
+          <span class="arch-card__desc">4 encoder levels, skip connections, batch normalization</span>
+        </div>
+        <div class="arch-card">
+          <span class="arch-card__icon">&#x1F4CA;</span>
+          <span class="arch-card__title">Curriculum Training</span>
+          <span class="arch-card__desc">Progressive noise scaling from easy → extreme over 80 epochs</span>
+        </div>
+        <div class="arch-card">
+          <span class="arch-card__icon">&#x1F3AF;</span>
+          <span class="arch-card__title">Dot-Pattern Focus</span>
+          <span class="arch-card__desc">Trained on synthetic blob+dot patterns with 5 noise types</span>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- ── Footer ────────────────────────────────────────────────────────── -->
   <footer class="footer">
