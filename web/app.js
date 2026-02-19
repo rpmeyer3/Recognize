@@ -1,6 +1,6 @@
 // ─── Configuration ──────────────────────────────────────────────────────────
-// Replace with your Render API URL after deploying
-const API_URL = window.API_URL || "https://pattern-delineation-api.onrender.com";
+// API hosted on Railway
+const API_URL = window.API_URL || "https://pattern-delineation-production.up.railway.app";
 
 // ─── DOM refs ───────────────────────────────────────────────────────────────
 const $ = (s) => document.querySelector(s);
