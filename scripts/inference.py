@@ -1,7 +1,7 @@
 import argparse, logging, os, sys
 from pathlib import Path
 import cv2, numpy as np, torch, yaml
-from torch.cuda.amp import autocast
+from torch.amp import autocast
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.models.attention_unet import build_attention_unet
@@ -34,9 +34,12 @@ def run_inference(model, tensor, device, threshold=0.5):
     model.eval()
     with torch.no_grad():
         tensor = tensor.to(device)
-        with autocast(enabled=device.type == "cuda"):
+        with autocast(device_type=device.type, enabled=device.type == "cuda"):
             logits = model(tensor)
-        mask = (torch.sigmoid(logits) > threshold).float()
+        probs = torch.sigmoid(logits)
+        log.info(f"Raw logit range: {logits.min().item():.4f} to {logits.max().item():.4f}")
+        log.info(f"Prob range: {probs.min().item():.4f} to {probs.max().item():.4f}")
+        mask = (probs > threshold).float()
     return mask[0, 0].cpu().numpy()
 
 
@@ -63,8 +66,10 @@ def main():
 
     name = cfg.get("model", {}).get("name", "attention_unet")
     model = build_attention_unet(cfg) if name == "attention_unet" else build_unet(cfg)
-    ckpt = torch.load(args.checkpoint, map_location=device)
-    model.load_state_dict(ckpt["model_state_dict"])
+    ckpt = torch.load(args.checkpoint, map_location=device, weights_only=False)
+    state = ckpt["model_state_dict"]
+    state = {k.replace("attention_gates.", "attn_gates."): v for k, v in state.items()}
+    model.load_state_dict(state)
     model = model.to(device)
     model.eval()
     log.info(f"Model loaded from {args.checkpoint}")
