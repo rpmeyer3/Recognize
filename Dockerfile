@@ -1,5 +1,5 @@
-# ── Stage 1: Build ───────────────────────────────────────────────────────────
-FROM python:3.11-slim AS base
+# ── Build ────────────────────────────────────────────────────────────────────
+FROM python:3.11-slim
 
 # System deps for opencv + curl for downloading checkpoint
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -8,11 +8,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install Python deps (cached layer)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install CPU-only PyTorch first (saves ~3 GB vs CUDA version)
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
-# Copy project (checkpoints excluded in .dockerignore)
+# Install remaining deps (skip torch/torchvision — already installed as CPU-only)
+COPY requirements.txt .
+RUN grep -v -E '^torch' requirements.txt > requirements-deploy.txt && \
+    pip install --no-cache-dir -r requirements-deploy.txt
+
+# Copy project
 COPY . .
 
 # Download checkpoint from Hugging Face
@@ -24,9 +28,11 @@ RUN mkdir -p /app/checkpoints && \
 ENV CONFIG_PATH=/app/configs/default.yaml
 ENV CHECKPOINT_PATH=/app/checkpoints/best.pth
 ENV ALLOWED_ORIGINS=*
-ENV PORT=10000
+
+# Railway sets PORT dynamically — default to 8000 as fallback
+ENV PORT=8000
 
 EXPOSE ${PORT}
 
-# Start uvicorn
-CMD uvicorn api.main:app --host 0.0.0.0 --port ${PORT}
+# Start uvicorn — uses $PORT from Railway
+CMD uvicorn api.main:app --host 0.0.0.0 --port $PORT

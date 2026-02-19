@@ -8,7 +8,10 @@ import yaml
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
-from torch.cuda.amp import autocast
+try:
+    from torch.amp import autocast
+except ImportError:
+    from torch.cuda.amp import autocast
 
 # ── allow imports from project root ──────────────────────────────────────────
 ROOT = Path(__file__).resolve().parent.parent
@@ -91,8 +94,7 @@ def _predict(gray: np.ndarray, threshold: float = 0.5):
     resized = cv2.resize(gray, (IMG_SIZE, IMG_SIZE), interpolation=cv2.INTER_AREA)
     t = torch.from_numpy(resized.astype(np.float32) / 255.0).unsqueeze(0).unsqueeze(0).to(DEVICE)
     with torch.no_grad():
-        with autocast(enabled=DEVICE.type == "cuda"):
-            logits = MODEL(t)
+        logits = MODEL(t)
         probs = torch.sigmoid(logits)
         mask = (probs > threshold).float()
     mask_np = cv2.resize(mask[0, 0].cpu().numpy(), (w, h), interpolation=cv2.INTER_NEAREST)
