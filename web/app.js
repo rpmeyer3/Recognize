@@ -1,36 +1,219 @@
-// ─── Configuration ──────────────────────────────────────────────────────────
-// API hosted on Railway
-const API_URL = window.API_URL || "https://pattern-delineation-production.up.railway.app";
+/* ═══════════════════════════════════════════════════════════════════════════
+   Pattern Delineation — Neural Analysis Lab
+   Frontend application logic
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-// ─── DOM refs ───────────────────────────────────────────────────────────────
+// ── Configuration ───────────────────────────────────────────────────────────
+const API_URL =
+  window.API_URL ||
+  "https://pattern-delineation-production.up.railway.app";
+
+const FETCH_TIMEOUT = 120_000; // 120 s
+
+// ── DOM refs ────────────────────────────────────────────────────────────────
 const $ = (s) => document.querySelector(s);
-const spinner = $("#spinner");
-const fileInput = $("#file-input");
-const dropZone = $("#drop-zone");
-const fileName = $("#file-name");
-const predictBtn = $("#predict-btn");
+
+const statusDot      = $("#status-dot");
+const statusLabel    = $("#status-label");
+const footerDevice   = $("#footer-device");
+
+const processingBox  = $("#processing-box");
+
 const thresholdSlider = $("#threshold");
-const threshVal = $("#thresh-val");
-const dotsSlider = $("#dots");
-const dotsVal = $("#dots-val");
-const jitterSlider = $("#jitter");
-const jitterVal = $("#jitter-val");
-const demoBtn = $("#demo-btn");
+const threshVal      = $("#thresh-val");
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-function showSpinner() { spinner.hidden = false; }
-function hideSpinner() { spinner.hidden = true; }
-// Fetch with timeout (default 120 s)
-function fetchWithTimeout(url, opts = {}, timeoutMs = 120000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
-  return fetch(url, { ...opts, signal: controller.signal }).finally(() => clearTimeout(id));
-}
-function b64ToSrc(b64) {
-  return `data:image/png;base64,${b64}`;
+const dotsSlider     = $("#dots");
+const dotsVal        = $("#dots-val");
+const jitterSlider   = $("#jitter");
+const jitterVal      = $("#jitter-val");
+const demoBtn        = $("#demo-btn");
+
+const heatmapToggle  = $("#heatmap-toggle");
+
+const viewerPlaceholder = $("#viewer-placeholder");
+const viewerResults     = $("#viewer-results");
+const canvasInput       = $("#canvas-input");
+const canvasMask        = $("#canvas-mask");
+const canvasHeatmap     = $("#canvas-heatmap");
+const maskLabel         = $("#mask-label");
+
+const gtRow          = $("#gt-row");
+const canvasGt       = $("#canvas-gt");
+const diceBadge      = $("#dice-badge");
+const diceValue      = $("#dice-value");
+
+// ── State ───────────────────────────────────────────────────────────────────
+let heatmapVisible   = false;
+let probImageData    = null;   // raw probability PNG data for heatmap
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+function toast(msg, type = "") {
+  const el = document.createElement("div");
+  el.className = `toast ${type ? "toast--" + type : ""}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
 }
 
-// ─── Slider labels ──────────────────────────────────────────────────────────
+async function fetchWithTimeout(url, opts = {}, timeout = FETCH_TIMEOUT) {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), timeout);
+  try {
+    const res = await fetch(url, { ...opts, signal: ctrl.signal });
+    clearTimeout(id);
+    return res;
+  } catch (e) {
+    clearTimeout(id);
+    if (e.name === "AbortError") throw new Error("Request timed out");
+    throw e;
+  }
+}
+
+function showProcessing(show) {
+  processingBox.hidden = !show;
+  demoBtn.disabled     = show;
+}
+
+// ── Draw base64 PNG onto a canvas ───────────────────────────────────────────
+function drawB64(canvas, b64) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      canvas.width  = img.width;
+      canvas.height = img.height;
+      canvas.getContext("2d").drawImage(img, 0, 0);
+      resolve(img);
+    };
+    img.src = "data:image/png;base64," + b64;
+  });
+}
+
+// ── Heatmap colorization ────────────────────────────────────────────────────
+// Takes a grayscale probability map and draws a cyan→magenta heatmap
+function drawHeatmap(canvas, b64Prob) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      canvas.width  = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = imageData.data;
+
+      for (let i = 0; i < d.length; i += 4) {
+        const v = d[i] / 255;           // prob 0→1
+
+        // Gradient: black → cyan → white
+        let r, g, b;
+        if (v < 0.5) {
+          const t = v * 2;
+          r = 0;
+          g = Math.round(t * 224);
+          b = Math.round(t * 255);
+        } else {
+          const t = (v - 0.5) * 2;
+          r = Math.round(t * 255);
+          g = Math.round(224 + t * 31);
+          b = 255;
+        }
+
+        d[i]     = r;
+        d[i + 1] = g;
+        d[i + 2] = b;
+        d[i + 3] = Math.round(v * 220); // alpha based on confidence
+      }
+      ctx.putImageData(imageData, 0, 0);
+      resolve();
+    };
+    img.src = "data:image/png;base64," + b64Prob;
+  });
+}
+
+// ── Animate metric rings on load ────────────────────────────────────────────
+function animateRings() {
+  const circ = parseFloat(
+    getComputedStyle(document.documentElement).getPropertyValue("--ring-circumference")
+  );
+  document.querySelectorAll(".metric__ring-fill").forEach((el) => {
+    const pct = parseFloat(el.dataset.pct) / 100;
+    el.style.strokeDashoffset = circ * (1 - pct);
+  });
+}
+
+// ── Health check ────────────────────────────────────────────────────────────
+async function checkHealth() {
+  try {
+    const res = await fetchWithTimeout(`${API_URL}/health`, {}, 10_000);
+    const j = await res.json();
+    statusDot.className   = "status-dot online";
+    statusLabel.textContent = "Model Online";
+    footerDevice.textContent = j.device || "cpu";
+  } catch {
+    statusDot.className   = "status-dot error";
+    statusLabel.textContent = "Offline";
+  }
+}
+
+// ── Show results ────────────────────────────────────────────────────────────
+function showResults() {
+  viewerPlaceholder.hidden = true;
+  viewerResults.hidden     = false;
+}
+
+// ── Demo ────────────────────────────────────────────────────────────────────
+async function demo() {
+  showProcessing(true);
+  try {
+    const dots   = dotsSlider.value;
+    const jitter = jitterSlider.value;
+
+    const res = await fetchWithTimeout(
+      `${API_URL}/demo?num_dots=${dots}&jitter=${jitter}`
+    );
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+    const j = await res.json();
+
+    showResults();
+    gtRow.hidden = false;
+
+    await Promise.all([
+      drawB64(canvasInput, j.input),
+      drawB64(canvasMask,  j.mask),
+      drawB64(canvasGt,    j.ground_truth),
+      drawHeatmap(canvasHeatmap, j.probability),
+    ]);
+
+    canvasHeatmap.hidden = !heatmapVisible;
+    probImageData = j.probability;
+
+    // Dice score
+    diceValue.textContent = j.dice.toFixed(4);
+
+    // Color code dice
+    if (j.dice >= 0.85) {
+      diceValue.style.color = "var(--success)";
+      diceValue.style.textShadow = "0 0 16px rgba(34,197,94,0.4)";
+    } else if (j.dice >= 0.6) {
+      diceValue.style.color = "var(--warning)";
+      diceValue.style.textShadow = "0 0 16px rgba(245,158,11,0.4)";
+    } else {
+      diceValue.style.color = "var(--danger)";
+      diceValue.style.textShadow = "0 0 16px rgba(239,68,68,0.4)";
+    }
+
+    toast(`Demo complete — Dice: ${j.dice.toFixed(4)}`, "success");
+  } catch (e) {
+    toast(e.message, "error");
+  } finally {
+    showProcessing(false);
+  }
+}
+
+// ── Event wiring ────────────────────────────────────────────────────────────
+
+// Slider live labels
 thresholdSlider.addEventListener("input", () => {
   threshVal.textContent = parseFloat(thresholdSlider.value).toFixed(2);
 });
@@ -41,93 +224,21 @@ jitterSlider.addEventListener("input", () => {
   jitterVal.textContent = parseFloat(jitterSlider.value).toFixed(3);
 });
 
-// ─── File upload (click + drag-and-drop) ────────────────────────────────────
-let selectedFile = null;
+// Demo button
+demoBtn.addEventListener("click", demo);
 
-fileInput.addEventListener("change", (e) => {
-  selectedFile = e.target.files[0];
-  if (selectedFile) {
-    fileName.textContent = selectedFile.name;
-    predictBtn.disabled = false;
-  }
+// Heatmap toggle
+heatmapToggle.addEventListener("click", () => {
+  heatmapVisible = !heatmapVisible;
+  heatmapToggle.classList.toggle("active", heatmapVisible);
+  canvasHeatmap.hidden = !heatmapVisible;
+  maskLabel.textContent = heatmapVisible
+    ? "Confidence Heatmap"
+    : "AI Segmentation Mask";
 });
 
-dropZone.addEventListener("dragover", (e) => {
-  e.preventDefault();
-  dropZone.classList.add("dragover");
-});
-dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
-dropZone.addEventListener("drop", (e) => {
-  e.preventDefault();
-  dropZone.classList.remove("dragover");
-  selectedFile = e.dataTransfer.files[0];
-  if (selectedFile) {
-    fileName.textContent = selectedFile.name;
-    predictBtn.disabled = false;
-  }
-});
-
-// ─── Predict (upload) ───────────────────────────────────────────────────────
-predictBtn.addEventListener("click", async () => {
-  if (!selectedFile) return;
-  showSpinner();
-  try {
-    const form = new FormData();
-    form.append("file", selectedFile);
-    const thresh = parseFloat(thresholdSlider.value);
-    const res = await fetchWithTimeout(`${API_URL}/predict/json?threshold=${thresh}`, {
-      method: "POST",
-      body: form,
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => res.statusText);
-      throw new Error(text);
-    }
-    const data = await res.json();
-
-    // Show input preview
-    const reader = new FileReader();
-    reader.onload = () => { $("#res-input").src = reader.result; };
-    reader.readAsDataURL(selectedFile);
-
-    $("#res-mask").src = b64ToSrc(data.mask);
-    $("#res-prob").src = b64ToSrc(data.probability);
-    $("#upload-results").hidden = false;
-  } catch (err) {
-    const msg = err.name === "AbortError"
-      ? "Request timed out — the server may be waking up. Try again in ~30 s."
-      : "Prediction failed: " + err.message;
-    alert(msg);
-  } finally {
-    hideSpinner();
-  }
-});
-
-// ─── Demo (generate random pattern) ─────────────────────────────────────────
-demoBtn.addEventListener("click", async () => {
-  showSpinner();
-  try {
-    const dots = parseInt(dotsSlider.value);
-    const jitter = parseFloat(jitterSlider.value);
-    const res = await fetchWithTimeout(`${API_URL}/demo?num_dots=${dots}&jitter=${jitter}`);
-    if (!res.ok) {
-      const text = await res.text().catch(() => res.statusText);
-      throw new Error(text);
-    }
-    const data = await res.json();
-
-    $("#demo-input").src = b64ToSrc(data.input);
-    $("#demo-gt").src = b64ToSrc(data.ground_truth);
-    $("#demo-mask").src = b64ToSrc(data.mask);
-    $("#demo-prob").src = b64ToSrc(data.probability);
-    $("#dice-score").textContent = `Dice Score: ${data.dice}`;
-    $("#demo-results").hidden = false;
-  } catch (err) {
-    const msg = err.name === "AbortError"
-      ? "Request timed out — the server may be waking up. Try again in ~30 s."
-      : "Demo failed: " + err.message;
-    alert(msg);
-  } finally {
-    hideSpinner();
-  }
+// ── Init ────────────────────────────────────────────────────────────────────
+window.addEventListener("DOMContentLoaded", () => {
+  animateRings();
+  checkHealth();
 });

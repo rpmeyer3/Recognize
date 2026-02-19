@@ -3,69 +3,195 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pattern Delineation</title>
+  <title>Pattern Delineation — Neural Analysis Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1>Pattern Delineation</h1>
-    <p class="subtitle">Noise-robust shape segmentation powered by Attention U-Net</p>
+
+  <!-- ── Ambient background ────────────────────────────────────────────── -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow--1"></div>
+  <div class="bg-glow bg-glow--2"></div>
+
+  <!-- ── Top bar ───────────────────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="topbar__brand">
+      <div class="topbar__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="topbar__title">Pattern Delineation</h1>
+        <p class="topbar__sub">Neural Segmentation Analysis Lab</p>
+      </div>
+    </div>
+    <div class="topbar__status">
+      <span class="status-dot" id="status-dot"></span>
+      <span class="status-label" id="status-label">Connecting…</span>
+    </div>
   </header>
 
-  <main>
-    <!-- ── Upload card ──────────────────────────────────────────────── -->
-    <section class="card" id="upload-section">
-      <h2>Upload an Image</h2>
-      <p>Upload a grayscale image and get a predicted binary mask.</p>
-      <div class="upload-area" id="drop-zone">
-        <input type="file" id="file-input" accept="image/*" hidden />
-        <button class="btn" onclick="document.getElementById('file-input').click()">
-          Choose File
+  <!-- ── Model metrics bar ─────────────────────────────────────────────── -->
+  <section class="metrics-bar glass">
+    <div class="metric" data-value="0.89">
+      <svg class="metric__ring" viewBox="0 0 40 40">
+        <circle class="metric__ring-bg" cx="20" cy="20" r="16"/>
+        <circle class="metric__ring-fill" cx="20" cy="20" r="16" data-pct="89"/>
+      </svg>
+      <div class="metric__info">
+        <span class="metric__value">0.89</span>
+        <span class="metric__label">Dice</span>
+      </div>
+    </div>
+    <div class="metric" data-value="0.80">
+      <svg class="metric__ring" viewBox="0 0 40 40">
+        <circle class="metric__ring-bg" cx="20" cy="20" r="16"/>
+        <circle class="metric__ring-fill" cx="20" cy="20" r="16" data-pct="80"/>
+      </svg>
+      <div class="metric__info">
+        <span class="metric__value">0.80</span>
+        <span class="metric__label">IoU</span>
+      </div>
+    </div>
+    <div class="metric" data-value="0.88">
+      <svg class="metric__ring" viewBox="0 0 40 40">
+        <circle class="metric__ring-bg" cx="20" cy="20" r="16"/>
+        <circle class="metric__ring-fill" cx="20" cy="20" r="16" data-pct="88"/>
+      </svg>
+      <div class="metric__info">
+        <span class="metric__value">0.88</span>
+        <span class="metric__label">Precision</span>
+      </div>
+    </div>
+    <div class="metric" data-value="0.89">
+      <svg class="metric__ring" viewBox="0 0 40 40">
+        <circle class="metric__ring-bg" cx="20" cy="20" r="16"/>
+        <circle class="metric__ring-fill" cx="20" cy="20" r="16" data-pct="89"/>
+      </svg>
+      <div class="metric__info">
+        <span class="metric__value">0.89</span>
+        <span class="metric__label">Recall</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Main workspace ────────────────────────────────────────────────── -->
+  <main class="workspace">
+
+    <!-- Left: Pattern Generator -->
+    <section class="panel glass" id="gateway-panel">
+      <h2 class="panel__heading"><span class="neon-dot"></span> Pattern Generator</h2>
+
+      <!-- Processing overlay -->
+      <div class="processing-box" id="processing-box" hidden>
+        <div class="processing-spinner">
+          <div class="spinner-ring"></div>
+          <div class="spinner-ring spinner-ring--2"></div>
+          <div class="spinner-ring spinner-ring--3"></div>
+        </div>
+        <p class="processing-text">Processing Neural Analysis…</p>
+      </div>
+
+      <!-- Demo controls -->
+      <div class="controls">
+        <div class="control-group">
+          <label class="control-label" for="dots">
+            Dots <span class="control-value" id="dots-val">40</span>
+          </label>
+          <input type="range" id="dots" class="slider" min="5" max="120" step="1" value="40" />
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="jitter">
+            Jitter <span class="control-value" id="jitter-val">0.03</span>
+          </label>
+          <input type="range" id="jitter" class="slider" min="0" max="0.15" step="0.005" value="0.03" />
+        </div>
+        <div class="control-group">
+          <label class="control-label" for="threshold">
+            Threshold <span class="control-value" id="thresh-val">0.50</span>
+          </label>
+          <input type="range" id="threshold" class="slider" min="0" max="1" step="0.01" value="0.5" />
+        </div>
+        <button class="btn btn--primary" id="demo-btn">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <polygon points="5,3 19,10 5,17"/>
+          </svg>
+          Generate &amp; Predict
         </button>
-        <span id="file-name">or drag &amp; drop here</span>
-      </div>
-      <div class="slider-row">
-        <label for="threshold">Threshold: <span id="thresh-val">0.50</span></label>
-        <input type="range" id="threshold" min="0.05" max="0.95" step="0.05" value="0.50" />
-      </div>
-      <button class="btn primary" id="predict-btn" disabled>Predict</button>
-      <div class="results" id="upload-results" hidden>
-        <div class="img-box"><p>Input</p><img id="res-input" /></div>
-        <div class="img-box"><p>Mask</p><img id="res-mask" /></div>
-        <div class="img-box"><p>Probability</p><img id="res-prob" /></div>
       </div>
     </section>
 
-    <!-- ── Demo card ────────────────────────────────────────────────── -->
-    <section class="card" id="demo-section">
-      <h2>Live Demo</h2>
-      <p>Generate a random dot pattern and see the model predict its boundary.</p>
-      <div class="slider-row">
-        <label for="dots">Dots: <span id="dots-val">40</span></label>
-        <input type="range" id="dots" min="8" max="120" step="2" value="40" />
+    <!-- Right: Dual-Pane Viewer -->
+    <section class="panel glass viewer-panel" id="viewer-panel">
+      <div class="viewer-header">
+        <h2 class="panel__heading"><span class="neon-dot"></span> Analysis Output</h2>
+        <div class="viewer-controls">
+          <button class="toggle-btn" id="heatmap-toggle" title="Toggle confidence heatmap overlay">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16">
+              <circle cx="10" cy="10" r="8"/>
+              <circle cx="10" cy="10" r="4"/>
+              <circle cx="10" cy="10" r="1"/>
+            </svg>
+            Heatmap
+          </button>
+        </div>
       </div>
-      <div class="slider-row">
-        <label for="jitter">Jitter: <span id="jitter-val">0.030</span></label>
-        <input type="range" id="jitter" min="0" max="0.1" step="0.005" value="0.03" />
+
+      <!-- Placeholder -->
+      <div class="viewer-placeholder" id="viewer-placeholder">
+        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.2" width="64" height="64" opacity="0.4">
+          <rect x="4" y="8" width="56" height="48" rx="4"/>
+          <circle cx="20" cy="26" r="6"/>
+          <path d="M4 44l16-14 10 8 14-16 16 12"/>
+        </svg>
+        <p>Generate a synthetic dot pattern to see AI segmentation in action</p>
       </div>
-      <button class="btn primary" id="demo-btn">Generate &amp; Predict</button>
-      <p class="score" id="dice-score"></p>
-      <div class="results" id="demo-results" hidden>
-        <div class="img-box"><p>Dot Pattern</p><img id="demo-input" /></div>
-        <div class="img-box"><p>Ground Truth</p><img id="demo-gt" /></div>
-        <div class="img-box"><p>Prediction</p><img id="demo-mask" /></div>
-        <div class="img-box"><p>Probability</p><img id="demo-prob" /></div>
+
+      <!-- Results -->
+      <div class="viewer-results" id="viewer-results" hidden>
+        <div class="viewer-grid">
+          <div class="viewer-pane">
+            <div class="pane-label">Original Input</div>
+            <div class="pane-frame">
+              <canvas id="canvas-input"></canvas>
+            </div>
+          </div>
+          <div class="viewer-pane">
+            <div class="pane-label" id="mask-label">AI Segmentation Mask</div>
+            <div class="pane-frame">
+              <canvas id="canvas-mask"></canvas>
+              <canvas id="canvas-heatmap" class="heatmap-overlay" hidden></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ground truth row (demo only) -->
+        <div class="gt-row" id="gt-row" hidden>
+          <div class="viewer-pane viewer-pane--sm">
+            <div class="pane-label">Ground Truth</div>
+            <div class="pane-frame pane-frame--sm">
+              <canvas id="canvas-gt"></canvas>
+            </div>
+          </div>
+          <div class="dice-badge" id="dice-badge">
+            <span class="dice-badge__label">Dice Score</span>
+            <span class="dice-badge__value" id="dice-value">—</span>
+          </div>
+        </div>
       </div>
     </section>
   </main>
 
-  <footer>
-    <p>API powered by FastAPI on Render &middot; Frontend on Vercel</p>
+  <!-- ── Footer ────────────────────────────────────────────────────────── -->
+  <footer class="footer">
+    <span>Attention U-Net · 31.5M Parameters · PyTorch</span>
+    <span class="footer__sep">·</span>
+    <span id="footer-device">CPU</span>
   </footer>
-
-  <div class="spinner" id="spinner" hidden>
-    <div class="loader"></div>
-  </div>
 
   <script src="app.js"></script>
 </body>
