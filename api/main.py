@@ -31,8 +31,9 @@ CFG = None
 # ── config ───────────────────────────────────────────────────────────────────
 CONFIG_PATH = os.environ.get("CONFIG_PATH", str(ROOT / "configs" / "default.yaml"))
 CHECKPOINT_PATH = os.environ.get("CHECKPOINT_PATH", str(ROOT / "checkpoints" / "best.pth"))
-# Comma-separated allowed origins (set in Render env vars)
-ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "*").split(",")
+# Comma-separated allowed origins (set in Railway env vars)
+_origins_raw = os.environ.get("ALLOWED_ORIGINS", "*").strip()
+ALLOWED_ORIGINS = ["*"] if _origins_raw == "*" else [o.strip() for o in _origins_raw.split(",")]
 
 # ── FastAPI app ──────────────────────────────────────────────────────────────
 app = FastAPI(title="Pattern Delineation API", version="1.0.0")
@@ -40,7 +41,7 @@ app = FastAPI(title="Pattern Delineation API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
