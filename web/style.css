@@ -609,7 +609,12 @@ body {
   transform: translateY(-2px);
 }
 
-.arch-card__icon { font-size: 1.6rem; }
+.arch-card__icon {
+  width: 32px; height: 32px;
+  color: var(--accent);
+  filter: drop-shadow(0 0 6px rgba(0, 224, 255, 0.3));
+}
+.arch-card__icon svg { width: 100%; height: 100%; }
 
 .arch-card__title {
   font-size: 0.78rem; font-weight: 600;
