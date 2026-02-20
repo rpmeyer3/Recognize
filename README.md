@@ -1,6 +1,6 @@
 # Pattern Delineation — Noise-Robust Shape Segmentation
 
-> Teach a deep network to delineate arbitrary organic shapes (silhouettes) from images with extreme, varying noise levels — from clean to near-zero SNR.
+> Teach a deep network to delineate arbitrary organic shapes (silhouettes) from images with extreme, varying noise levels — from clean to near-zero SNR. Using this as a steeping stone for noise-copyright development.
 
 ---
 
