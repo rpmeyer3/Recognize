@@ -2,7 +2,7 @@
 
 > An Attention U-Net trained with curriculum learning to segment dot-filled organic shapes from images under extreme, variable noise — from clean inputs to near-zero SNR.
 
-**[Live Demo](https://pattern-delineation.vercel.app)** · **[API](https://pattern-delineation-production.up.railway.app/health)** · **[Model Weights](https://huggingface.co/ryandoesai/pattern-dillineation)**
+> Teach a deep network to delineate arbitrary organic shapes (silhouettes) from images with extreme, varying noise levels — from clean to near-zero SNR.
 
 ---
 
