@@ -11,3 +11,6 @@
 /src/data
 training.log
 *.log
+
+# Claude Code
+.claude/

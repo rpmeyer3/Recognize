@@ -4,7 +4,16 @@
 
 > Teach a deep network to delineate arbitrary organic shapes (silhouettes) from images with extreme, varying noise levels — from clean to near-zero SNR.
 
----
+<!-- -->
+
+## Highlights
+
+- **Engineered** a 31.5M-parameter Attention U-Net with CBAM and anti-alias blur-pool downsampling, achieving a **validation Dice score of 0.886** and IoU of 0.796 on segmenting organic shapes under extreme variable noise (SNR from >30 dB to <0 dB).
+- **Implemented** a 4-phase curriculum learning strategy (Easy → Extreme noise) with custom composite loss (Dice + BCE + Boundary Tversky), training 80 epochs on an RTX 4070 Ti SUPER with mixed-precision (fp16).
+- **Built** a full deployment pipeline — FastAPI backend on Railway, glassmorphism web dashboard on Vercel, and a 379 MB model checkpoint hosted on Hugging Face — featuring interactive confidence heatmap overlays and dual-pane comparison viewers.
+- **Stack:** PyTorch · FastAPI · OpenCV · Docker · Vercel · Railway · Hugging Face
+
+<!-- -->
 
 ## Table of Contents
 
@@ -19,7 +28,7 @@
 9. [Quick Start](#quick-start)
 10. [License](#license)
 
----
+<!-- -->
 
 ## Overview
 
@@ -32,7 +41,7 @@ The model generalizes across:
 
 The full system includes a **FastAPI inference server** (Railway), a **glassmorphism web dashboard** (Vercel), and model weights hosted on **Hugging Face**.
 
----
+<!-- -->
 
 ## Final Results
 
@@ -48,7 +57,7 @@ Trained for **80 epochs** on an RTX 4070 Ti SUPER (16 GB VRAM) with curriculum l
 
 > *Clean Dice* is evaluated on noise-free inputs to measure pure segmentation quality independent of noise robustness.
 
----
+<!-- -->
 
 ## Architecture
 
@@ -77,7 +86,7 @@ $$\mathcal{L} = \alpha \cdot \mathcal{L}_{\text{Dice}} + \beta \cdot \mathcal{L}
 | **BCE with Logits** | Per-pixel calibration, gradient stability | β = 1.0 → 0.5 over training |
 | **Boundary Tversky** | Asymmetric FP/FN penalty for sharp edges (α=0.7, β=0.3) | γ = 0.0 → 0.5 (ramped epochs 20–60) |
 
----
+<!-- -->
 
 ## Data Pipeline
 
@@ -100,7 +109,7 @@ All training data is synthesized on-the-fly — no external datasets required:
 | Speckle | Multiplicative Gaussian | $\sigma \in [0.05, 2.0]$ |
 | Mixed | Compound of 2–3 above | Sampled per type |
 
----
+<!-- -->
 
 ## Training Details
 
@@ -128,7 +137,7 @@ The model trains in 4 progressive difficulty phases. A `noise_scale` factor cont
 | Training data | 5,000 samples (regenerated each epoch via synthesis) |
 | Validation data | 2,000 samples |
 
----
+<!-- -->
 
 ## Deployment Architecture
 
@@ -154,7 +163,7 @@ The model trains in 4 progressive difficulty phases. A `noise_scale` factor cont
 | `POST` | `/predict` | Upload image → binary mask PNG |
 | `POST` | `/predict/json` | Upload image → base64 mask + probability map |
 
----
+<!-- -->
 
 ## Problems & Solutions
 
@@ -215,7 +224,7 @@ curl -L -o /app/checkpoints/best.pth \
 state = {k.replace("attention_gates.", "attn_gates."): v for k, v in state.items()}
 ```
 
----
+<!-- -->
 
 ## Project Structure
 
@@ -266,7 +275,7 @@ pattern-delineation/
 └── requirements.txt            # Python dependencies
 ```
 
----
+<!-- -->
 
 ## Quick Start
 
@@ -312,7 +321,7 @@ docker build -t pattern-delineation .
 docker run -p 8000:8000 pattern-delineation
 ```
 
----
+<!-- -->
 
 ## Tech Stack
 
@@ -325,7 +334,7 @@ docker run -p 8000:8000 pattern-delineation
 | Hosting | Railway (API), Vercel (frontend), Hugging Face (weights) |
 | Containerization | Docker (Python 3.11 slim) |
 
----
+<!-- -->
 
 ## License
 
