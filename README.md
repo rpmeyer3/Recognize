@@ -1,8 +1,8 @@
-# Pattern Delineation — Noise-Robust Dot-Pattern Segmentation
+# Pattern Delineation: Noise-Robust Dot-Pattern Segmentation
 
-> An Attention U-Net trained with curriculum learning to segment dot-filled organic shapes from images under extreme, variable noise — from clean inputs to near-zero SNR.
+> An Attention U-Net trained with curriculum learning to segment dot-filled organic shapes from images under extreme, variable noise, from clean inputs to near-zero SNR.
 
-> Teach a deep network to delineate arbitrary organic shapes (silhouettes) from images with extreme, varying noise levels — from clean to near-zero SNR.
+> Teach a deep network to delineate arbitrary organic shapes (silhouettes) from images with extreme, varying noise levels, from clean to near-zero SNR.
 
 <!-- -->
 
@@ -10,7 +10,7 @@
 
 - **Engineered** a 31.5M-parameter Attention U-Net with CBAM and anti-alias blur-pool downsampling, achieving a **validation Dice score of 0.886** and IoU of 0.796 on segmenting organic shapes under extreme variable noise (SNR from >30 dB to <0 dB).
 - **Implemented** a 4-phase curriculum learning strategy (Easy → Extreme noise) with custom composite loss (Dice + BCE + Boundary Tversky), training 80 epochs on an RTX 4070 Ti SUPER with mixed-precision (fp16).
-- **Built** a full deployment pipeline — FastAPI backend on Railway, glassmorphism web dashboard on Vercel, and a 379 MB model checkpoint hosted on Hugging Face — featuring interactive confidence heatmap overlays and dual-pane comparison viewers.
+- **Built** a full deployment pipeline (FastAPI backend on Railway, glassmorphism web dashboard on Vercel, and a 379 MB model checkpoint hosted on Hugging Face) featuring interactive confidence heatmap overlays and dual-pane comparison viewers.
 - **Stack:** PyTorch · FastAPI · OpenCV · Docker · Vercel · Railway · Hugging Face
 
 <!-- -->
@@ -74,7 +74,7 @@ Trained for **80 epochs** on an RTX 4070 Ti SUPER (16 GB VRAM) with curriculum l
 
 **Why Attention U-Net over vanilla U-Net?**
 
-Standard U-Net skip connections faithfully propagate noisy encoder features to the decoder, which collapses at low SNR. Attention gates learn to weight only signal-relevant spatial regions, effectively acting as a learned noise gate. CBAM further improves selectivity — noise activates many channels uniformly while actual signal concentrates on fewer channels.
+Standard U-Net skip connections faithfully propagate noisy encoder features to the decoder, which collapses at low SNR. Attention gates learn to weight only signal-relevant spatial regions, effectively acting as a learned noise gate. CBAM further improves selectivity: noise activates many channels uniformly while actual signal concentrates on fewer channels.
 
 ### Loss Function
 
@@ -92,7 +92,7 @@ $$\mathcal{L} = \alpha \cdot \mathcal{L}_{\text{Dice}} + \beta \cdot \mathcal{L}
 
 ### Synthetic Generation
 
-All training data is synthesized on-the-fly — no external datasets required:
+All training data is synthesized on-the-fly, so no external datasets are required:
 
 1. **Shape generation**: Random organic silhouettes via Bézier blobs with 5–15 control points
 2. **Dot filling**: 15–80 dots of radius 2–6 px scattered inside the shape with configurable jitter
@@ -150,8 +150,8 @@ The model trains in 4 progressive difficulty phases. A `noise_scale` factor cont
 └──────────────┘       └───────────────────┘       └─────────────────┘
 ```
 
-- **Frontend**: Vanilla HTML/CSS/JS on Vercel — dark glassmorphism dashboard with metric rings, dual-pane viewer, confidence heatmap overlay, run history, and download support
-- **Backend**: FastAPI on Railway — loads model on startup, serves `/demo` (synthetic pattern generation + inference) and `/predict` (custom image inference)
+- **Frontend**: Vanilla HTML/CSS/JS on Vercel, a dark glassmorphism dashboard with metric rings, dual-pane viewer, confidence heatmap overlay, run history, and download support
+- **Backend**: FastAPI on Railway. Loads the model on startup, serves `/demo` (synthetic pattern generation + inference) and `/predict` (custom image inference)
 - **Weights**: Hosted on Hugging Face, downloaded at Docker build time via `curl -L` with `?download=true` for Xet storage compatibility
 
 ### API Endpoints
@@ -175,7 +175,7 @@ The model trains in 4 progressive difficulty phases. A `noise_scale` factor cont
 
 ### 2. Model Producing Empty Masks
 
-**Problem**: After initial training, the model output completely blank masks — all zeros. Investigating the logit/probability ranges showed the sigmoid outputs were near-zero everywhere, meaning the model had learned to predict "background" for every pixel.
+**Problem**: After initial training, the model output completely blank masks, all zeros. Investigating the logit/probability ranges showed the sigmoid outputs were near-zero everywhere, meaning the model had learned to predict "background" for every pixel.
 
 **Root cause**: **Config drift**. The `default.yaml` noise parameters had been silently modified between data generation and training. The training was using different noise ranges than what the data was generated with, causing a distribution mismatch. The checkpoint was essentially garbage.
 
@@ -195,7 +195,7 @@ curl -L -o /app/checkpoints/best.pth \
 
 ### 4. CORS and Frontend Connection Issues
 
-**Problem**: The Vercel frontend couldn't reach the Railway backend — requests were blocked by CORS policy. Additionally, setting `allow_credentials=True` with `allow_origins=["*"]` is invalid per the CORS spec.
+**Problem**: The Vercel frontend couldn't reach the Railway backend because requests were blocked by CORS policy. Additionally, setting `allow_credentials=True` with `allow_origins=["*"]` is invalid per the CORS spec.
 
 **Solution**: Set `allow_credentials=False` in FastAPI's CORS middleware (credentials aren't needed for this API). Made `ALLOWED_ORIGINS` configurable via environment variable.
 
@@ -209,13 +209,13 @@ curl -L -o /app/checkpoints/best.pth \
 
 **Problem**: Users could upload arbitrary photos (dogs, landscapes, etc.) but the model produced meaningless masks. The upload feature gave the impression the model was broken.
 
-**Root cause**: The model is **only trained on synthetic dot patterns** — it has no concept of natural images. Uploading a photo of a dog will never produce a useful segmentation mask.
+**Root cause**: The model is **only trained on synthetic dot patterns**, so it has no concept of natural images. Uploading a photo of a dog will never produce a useful segmentation mask.
 
 **Solution**: Removed the drag-and-drop upload feature entirely. The frontend now exclusively uses the "Generate & Predict" demo flow, which synthesizes patterns matching the training distribution. The `/predict` API endpoint is kept for programmatic use but isn't exposed in the UI.
 
 ### 7. Attention Gate Key Mismatch
 
-**Problem**: Loading the trained checkpoint threw `RuntimeError: Missing key(s)` — the state dict keys didn't match the model definition.
+**Problem**: Loading the trained checkpoint threw `RuntimeError: Missing key(s)`. The state dict keys didn't match the model definition.
 
 **Root cause**: The training code saved the model with keys like `attention_gates.W_g.weight`, but the model class defined the modules as `attn_gates`.
 
